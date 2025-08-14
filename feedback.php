@@ -1,64 +1,30 @@
 <?php
-session_start();
-include 'config.php';
+require_once 'config.php'; // Include DB connection
 
-$error = '';
+$message = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['Email'] ?? '';
-    $password = $_POST['Password'] ?? '';
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $name = trim($_POST["name"]);
+    $email = trim($_POST["email"]);
+    $feedback = trim($_POST["message"]);
 
-    // Check in users table
-    $stmtUser = $conn->prepare("SELECT * FROM users WHERE Email = ?");
-    $stmtUser->execute([$email]);
-    $user = $stmtUser->fetch();
-
-    // Check in employee table
-    $stmtEmp = $conn->prepare("SELECT * FROM empolyee WHERE Email = ?");
-    $stmtEmp->execute([$email]);
-    $emp = $stmtEmp->fetch();
-
-    $stmtadmin = $conn->prepare("SELECT * FROM admin WHERE Email = ?");
-    $stmtadmin->execute([$email]);
-    $admin = $stmtadmin->fetch();
-
-    if ($user && $password === $user['Password']) {
-        $_SESSION['user'] = [
-            'id'    => $user['id'],
-            'Name'  => $user['Name'],
-            'Email' => $user['Email'],
-        ];
-        header("Location: jobs.php");
-        exit;
-    }
-    elseif ($admin && $password === $admin['Password']) {
-        $_SESSION['user'] = [
-            'id'    => $admin['id'],
-            'Name'  => $admin['Name'],
-            'Email' => $admin['Email'],
-        ];
-        header("Location: admin.php");
-        exit;
-    }
-     elseif ($emp && $password === $emp['Password']) {
-        $_SESSION['empolyee'] = [
-            'id'    => $emp['id'],
-            'Name'  => $emp['Name'],
-            'Email' => $emp['Email'],
-        ];
-        header("Location: employer.php");
-        exit;
-    }
-     else {
-        $error = "Invalid email or password.";
+    if ($name && $email && $feedback) {
+        try {
+            $stmt = $conn->prepare("INSERT INTO feedback (name, email, message) VALUES ('$name', '$email', '$feedback')");
+            $stmt->execute();
+            $message = '<p class="message success">Thank you for your feedback!</p>';
+        } catch (PDOException $e) {
+            $message = '<p class="message error">Error saving feedback: ' . $e->getMessage() . '</p>';
+        }
+    } else {
+        $message = '<p class="message error">Please fill in all fields.</p>';
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - JobNest</title>
+    <title>Feedback - JobNest</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
         * {
@@ -122,14 +88,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 40px 20px;
         }
 
-        .login-box {
+        .feedback-box {
             background: #ffffff;
             padding: 40px 30px;
             border-radius: 10px;
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
             box-shadow: 0 0 15px rgba(0, 98, 255, 0.1);
             animation: fadeIn 0.5s ease forwards;
+        }
+
+        .feedback-box h2 {
+            text-align: center;
+            color: #004080;
+            margin-bottom: 25px;
+        }
+
+        .feedback-box input,
+        .feedback-box textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .feedback-box textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .feedback-box input:focus,
+        .feedback-box textarea:focus {
+            outline: none;
+            border-color: #007acc;
+            box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
+        }
+
+        .feedback-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(to right, #004080, #007acc);
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        .feedback-box button:hover {
+            background: linear-gradient(to right, #003366, #005fa3);
+        }
+
+        .message {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .message.success {
+            color: green;
+        }
+
+        .message.error {
+            color: red;
+        }
+
+        footer {
+            background-color: #004080;
+            text-align: center;
+            padding: 15px;
+            color: #fff;
+            font-size: 14px;
         }
 
         @keyframes fadeIn {
@@ -143,60 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        .login-box h2 {
-            text-align: center;
-            color: #004080;
-            margin-bottom: 25px;
-        }
-
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .login-box input:focus {
-            outline: none;
-            border-color: #007acc;
-            box-shadow: 0 0 8px rgba(0, 122, 204, 0.2);
-        }
-
-        .login-box button,
-        .login-box input[type="submit"] {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(to right, #004080, #007acc);
-            color: #fff;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            transition: 0.3s;
-        }
-
-        .login-box button:hover,
-        .login-box input[type="submit"]:hover {
-            background: linear-gradient(to right, #003366, #005fa3);
-        }
-
-        .error {
-            color: red;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        footer {
-            background-color: #004080;
-            text-align: center;
-            padding: 15px;
-            color: #fff;
-            font-size: 14px;
-        }
-
         @media (max-width: 480px) {
             .container {
                 flex-direction: column;
@@ -204,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 text-align: center;
             }
 
-            .login-box {
+            .feedback-box {
                 margin: 0 10px;
                 padding: 30px 20px;
             }
@@ -221,21 +200,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <main>
-    <div class="login-box">
-        <h2>Login</h2>
+    <div class="feedback-box">
+        <h2>Send Us Feedback</h2>
 
-        <?php if ($error): ?>
-            <p class="error"><?= htmlspecialchars($error) ?></p>
-        <?php endif; ?>
+        <?= $message ?>
 
-        <form method="POST" action="login.php">
-            <label>Email:</label>
-            <input type="email" name="Email" required>
+        <form method="POST" action="feedback.php">
+            <label for="name">Your Name:</label>
+            <input type="text" name="name" id="name" required>
 
-            <label>Password:</label>
-            <input type="password" name="Password" required>
+            <label for="email">Your Email:</label>
+            <input type="email" name="email" id="email" required>
 
-            <input type="submit" name="save" value="Login">
+            <label for="feedback">Your Feedback:</label>
+            <textarea name="message" id="feedback" required></textarea>
+
+            <button type="submit">Submit Feedback</button>
         </form>
     </div>
 </main>

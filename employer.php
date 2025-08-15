@@ -43,19 +43,24 @@ $stmt = $conn->prepare("SELECT * FROM jobs WHERE employer_email = ? ORDER BY id 
 $stmt->execute([$empEmail]);
 $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch applications grouped by job_id
-$appStmt = $conn->prepare("SELECT * FROM applications WHERE id IN (
-    SELECT id FROM jobs WHERE employer_email = ?
-)");
-$appStmt->execute([$empEmail]);
-$applications = $appStmt->fetchAll(PDO::FETCH_ASSOC);
+// Step 1: Fetch job IDs
+$jobIds = array_column($jobs, 'id');
 
-// Group applications by job_id
+// Step 2: Fetch applications grouped by job_id
+$applications = [];
 $appsByJob = [];
-foreach ($applications as $app) {
-    $appsByJob[$app['id']][] = $app;
-}
 
+if (!empty($jobIds)) {
+    $placeholders = implode(',', array_fill(0, count($jobIds), '?'));
+    $appStmt = $conn->prepare("SELECT * FROM applicants WHERE job_id IN ($placeholders)");
+    $appStmt->execute($jobIds);
+    $applications = $appStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Group applications by job_id
+    foreach ($applications as $app) {
+        $appsByJob[$app['job_id']][] = $app;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -120,15 +125,14 @@ foreach ($applications as $app) {
             margin-bottom: 15px;
         }
         .job-listing ul {
-    padding-left: 20px;
-}
-.job-listing ul li {
-    margin-bottom: 10px;
-    background: #f9f9f9;
-    padding: 10px;
-    border-left: 3px solid #004080;
-}
-
+            padding-left: 20px;
+        }
+        .job-listing ul li {
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 3px solid #004080;
+        }
     </style>
 </head>
 <body>
@@ -157,37 +161,37 @@ foreach ($applications as $app) {
     <h2>Your Posted Jobs</h2>
     <?php if ($jobs): ?>
         <?php foreach ($jobs as $job): ?>
-    <div class="job-listing">
-        <h3><?= htmlspecialchars($job['title']) ?></h3>
-        <p><strong>Company:</strong> <?= htmlspecialchars($job['company']) ?></p>
-        <p><strong>Location:</strong> <?= htmlspecialchars($job['location']) ?> |
-           <strong>Sector:</strong> <?= htmlspecialchars($job['sector']) ?></p>
-        <p><?= nl2br(htmlspecialchars(substr($job['description'], 0, 200))) ?>...</p>
+            <div class="job-listing">
+                <h3><?= htmlspecialchars($job['title']) ?></h3>
+                <p><strong>Company:</strong> <?= htmlspecialchars($job['company']) ?></p>
+                <p><strong>Location:</strong> <?= htmlspecialchars($job['location']) ?> |
+                   <strong>Sector:</strong> <?= htmlspecialchars($job['sector']) ?></p>
+                <p><?= nl2br(htmlspecialchars(substr($job['description'], 0, 200))) ?>...</p>
 
-        <?php if (!empty($appsByJob[$job['id']])): ?>
-            <h4>Applicants:</h4>
-            <ul>
-                <?php foreach ($appsByJob[$job['id']] as $app): ?>
-                    <li>
-                        <strong><?= htmlspecialchars($app['name']) ?></strong> 
-                        (<?= htmlspecialchars($app['email']) ?>) <br>
-                        <em>Applied on <?= date('M d, Y') ?></em><br>
-                        <?= nl2br(htmlspecialchars(substr($app['cover_letter'], 0, 150))) ?>...
-                        <?php if (!empty($app['resume_path'])): ?>
-                            <br><a href="<?= htmlspecialchars($app['resume_path']) ?>" target="_blank">View Resume</a>
-                        <?php endif; ?>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php else: ?>
-            <p><em>No applicants yet for this job.</em></p>
-        <?php endif; ?>
-    </div>
-<?php endforeach; ?>
+                <?php if (!empty($appsByJob[$job['id']])): ?>
+                    <h4>Applicants:</h4>
+                    <ul>
+                        <?php foreach ($appsByJob[$job['id']] as $app): ?>
+                            <li>
+                                <strong><?= htmlspecialchars($app['name']) ?></strong>
+                                (<?= htmlspecialchars($app['email']) ?>) <br>
+                                <em>Applied on <?= date('M d, Y', strtotime($app['applied_at'] ?? 'now')) ?></em><br>
+                                <?= nl2br(htmlspecialchars(substr($app['cover_letter'], 0, 150))) ?>...
+                                <?php if (!empty($app['resume_path'])): ?>
+                                    <br><a href="<?= htmlspecialchars($app['resume_path']) ?>" target="_blank">View Resume</a>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p><em>No applicants yet for this job.</em></p>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
     <?php else: ?>
         <p>You haven’t posted any jobs yet.</p>
     <?php endif; ?>
 </div>
-<?php include 'footer.php';?>
+<?php include 'footer.php'; ?>
 </body>
 </html>

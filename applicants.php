@@ -2,7 +2,7 @@
 include 'config.php';
 require_once 'adminheader.php';
 
-$stmtApps = $conn->query("SELECT * FROM applications");
+$stmtApps = $conn->query("SELECT * FROM applicants");
 $applicants = $stmtApps->fetchAll();
 ?>
 

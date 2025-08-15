@@ -12,8 +12,8 @@ require_once 'config.php';
 $usersCount = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
 $employersCount = $conn->query("SELECT COUNT(*) FROM empolyee")->fetchColumn();
 $jobsCount = $conn->query("SELECT COUNT(*) FROM jobs")->fetchColumn();
-$applicantsCount = $conn->query("SELECT COUNT(*) FROM applications")->fetchColumn();
-$overallProgress = round(($usersCount + $employersCount + $jobsCount + $applicantsCount) / 200 * 100);
+$applicantsCount = $conn->query("SELECT COUNT(*) FROM applicants")->fetchColumn();
+$overallProgress = round(($usersCount + $employersCount + $jobsCount + $applicantsCount) / 500 * 100);
 
 // Session display variables
 $user = $_SESSION['user'] ?? $_SESSION['empolyee'] ?? null;

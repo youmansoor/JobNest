@@ -52,7 +52,7 @@ $appsByJob = [];
 
 if (!empty($jobIds)) {
     $placeholders = implode(',', array_fill(0, count($jobIds), '?'));
-    $appStmt = $conn->prepare("SELECT * FROM applicants WHERE job_id IN ($placeholders)");
+    $appStmt = $conn->prepare("SELECT * FROM applicants WHERE id IN ($placeholders)");
     $appStmt->execute($jobIds);
     $applications = $appStmt->fetchAll(PDO::FETCH_ASSOC);
 

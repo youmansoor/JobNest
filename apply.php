@@ -64,10 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Save application if no errors
     if (empty($error)) {
         $applyStmt = $conn->prepare("
-            INSERT INTO applications (name, email, cover_letter, resume_path)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO applicants (name, email, cover_letter, resume_path)
+            VALUES ('$name', '$email', '$message', '$resumePath')
         ");
-        if ($applyStmt->execute([$name, $email, $message, $resumePath])) {
+        if ($applyStmt->execute()) {
             $success = "Application submitted successfully!";
         } else {
             $error = "Failed to submit application.";

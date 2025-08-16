@@ -187,7 +187,7 @@ $role = 'Admin';
   <a href="job.php"><i class="fas fa-briefcase me-2"></i> Jobs</a>
   <a href="applicants.php"><i class="fas fa-file-alt me-2"></i> Applicants</a>
   <a href="feedback.php"><i class="fas fa-comments me-2"></i> Feedback</a>
-
+  <a href="index.php"><i class="fas fa-home me-2"></i> Back to Home</a>
   <a href="logout.php" class="text-danger mt-3"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
   
 </div>

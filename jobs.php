@@ -120,7 +120,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .job-card {
-            /* width: 80%; */
+          /* width: 80%; */
           background-color: #ffffff;
           border-radius: 8px;
           box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);

@@ -7,27 +7,36 @@ require_once 'config.php';
 $user = null;
 $name = '';
 $email = '';
-$role = '';
+$role = 'User'; // Default role
 
-// Determine user from session
-if (isset($_SESSION['user'])) {
-    $user = $_SESSION['user'];
+// Promote admin if logged in as user
+if (isset($_SESSION['user']) && $_SESSION['user']['Email'] === 'admin@gmail.com') {
+    $_SESSION['admin'] = $_SESSION['user'];
+}
+
+if (isset($_SESSION['admin'])) {
+    $user = $_SESSION['admin'];
     $name = htmlspecialchars($user['Name']);
     $email = htmlspecialchars($user['Email']);
-    $role = isset($user['Role']) ? $user['Role'] : 'User';
-} elseif (isset($_SESSION['empolyee'])) { // keep typo if you used it throughout
+    $role = 'admin';
+} elseif (isset($_SESSION['empolyee'])) { // keep typo if consistent
     $user = $_SESSION['empolyee'];
     $name = htmlspecialchars($user['Name']);
     $email = htmlspecialchars($user['Email']);
-    $role = 'Employer';
+    $role = 'employer';
+} elseif (isset($_SESSION['user'])) {
+    $user = $_SESSION['user'];
+    $name = htmlspecialchars($user['Name']);
+    $email = htmlspecialchars($user['Email']);
+    $role = 'user';
 }
 
 // Current page
 $currentPage = basename($_SERVER['PHP_SELF']);
 
 // Conditional buttons
-$showBackToEmployer = ($role === 'Employer' && $currentPage === 'index.php');
-$showBackToAdmin = ($role === 'Admin' && $currentPage === 'index.php');
+$showBackToEmployer = ($role === 'employer' && $currentPage === 'index.php');
+$showBackToAdmin = ($role === 'admin' && $currentPage === 'index.php');
 ?>
 
 <!-- Font Awesome CDN -->
@@ -178,31 +187,71 @@ $showBackToAdmin = ($role === 'Admin' && $currentPage === 'index.php');
     color: white;
   }
 
+  .menu-toggle {
+    display: none;
+    font-size: 24px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
   @media (max-width: 768px) {
-    #container {
+    .menu-toggle {
+      display: block;
+    }
+
+    nav {
+      width: 100%;
       flex-direction: column;
-      align-items: flex-start;
-      gap: 15px;
+      display: none;
+    }
+
+    nav.active {
+      display: flex;
     }
 
     nav ul {
       flex-direction: column;
+      width: 100%;
       gap: 10px;
+      padding-top: 10px;
+    }
+
+    nav ul li {
+      width: 100%;
+    }
+
+    nav ul li a {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
     }
 
     .auth-buttons {
       flex-direction: column;
-      gap: 10px;
       width: 100%;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 10px;
     }
+    .dropdown {
+    transform: none;
+    left: 0;
+    right: auto;
+    width: max-content;
+  }
   }
 </style>
 
 <header>
   <div id="container">
     <div class="logo"><i class="fas fa-briefcase"></i> JobNest</div>
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+      <i class="fas fa-bars"></i>
+    </button>
 
-    <nav>
+    <nav id="nav-menu">
       <ul>
         <li><a href="index.php">Home</a></li>
         <li><a href="feedback.php">Feedback</a></li>
@@ -242,22 +291,34 @@ $showBackToAdmin = ($role === 'Admin' && $currentPage === 'index.php');
   document.addEventListener('DOMContentLoaded', function () {
     const userNameBtn = document.getElementById('user-name-btn');
     const dropdown = document.getElementById('user-dropdown');
+    const menuToggle = document.getElementById('menu-toggle');
+    const navMenu = document.getElementById('nav-menu');
 
+    // Toggle user dropdown
     if (userNameBtn && dropdown) {
       userNameBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-
         const isVisible = dropdown.style.display === 'block';
         dropdown.style.display = isVisible ? 'none' : 'block';
-
         userNameBtn.setAttribute('aria-expanded', !isVisible);
         dropdown.setAttribute('aria-hidden', isVisible);
       });
 
       document.addEventListener('click', function () {
         dropdown.style.display = 'none';
-        userNameBtn.setAttribute('aria-expanded', 'false');
-        dropdown.setAttribute('aria-hidden', 'true');
+        if (userNameBtn) {
+          userNameBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (dropdown) {
+          dropdown.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    // Toggle navigation on mobile
+    if (menuToggle && navMenu) {
+      menuToggle.addEventListener('click', function () {
+        navMenu.classList.toggle('active');
       });
     }
   });
